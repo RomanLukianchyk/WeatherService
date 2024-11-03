@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}My Subscriptions{% endblock %}
+
+{% block content %}
+<h2>My Subscriptions</h2>
+<a href="{% url 'add_subscription' %}" class="btn btn-primary">Add Subscription</a>
+<ul>
+    {% for subscription in subscriptions %}
+        <li>
+            {{ subscription.city.name }} - {{ subscription.get_notification_period_display }}
+            <a href="{% url 'edit_subscription' subscription.id %}">Edit</a>
+            <a href="{% url 'delete_subscription' subscription.id %}">Delete</a>
+        </li>
+    {% endfor %}
+</ul>
+{% endblock %}

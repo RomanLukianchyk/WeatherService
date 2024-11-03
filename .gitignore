@@ -1,0 +1,46 @@
+# Python
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+*.db
+
+# Virtual environment
+venv/
+env/
+ENV/
+.venv/
+.ENV/
+
+# Django stuff:
+*.log
+db.sqlite3
+*.sqlite3
+media/
+staticfiles/
+.DS_Store
+
+# Migrations
+*/migrations/*
+
+# PyCharm
+.idea/
+
+# VSCode
+.vscode/
+
+# MySQL
+*.sql
+
+# Postgres
+*.pgsql
+
+# Environment variables
+.env
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+ehthumbs.db
