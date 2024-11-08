@@ -6,10 +6,12 @@ __pycache__/
 *.db
 
 # Virtual environment
-venv/
-env/
-ENV/
 .venv/
+env/
+.env/
+ENV/
+.myenv/
+myenv
 .ENV/
 
 # Django stuff:
@@ -37,10 +39,11 @@ staticfiles/
 
 # Environment variables
 .env
+~
 
-# macOS
-.DS_Store
 
 # Windows
 Thumbs.db
 ehthumbs.db
+
+*~

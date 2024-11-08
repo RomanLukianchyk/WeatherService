@@ -1,65 +1,73 @@
-from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
-from django.shortcuts import render, redirect
-from django.contrib import messages
-from django.contrib.auth import login, logout
-from django.contrib.auth.forms import AuthenticationForm
-from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
+from django.core.exceptions import ValidationError
+from rest_framework import status
 from rest_framework.response import Response
-from users.forms import UserRegisterForm
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from django.contrib.auth.models import User
+from rest_framework_simplejwt.tokens import RefreshToken
+
+from services.user_service import UserService
 
 
+@api_view(['POST'])
+@permission_classes([AllowAny])
 def register(request):
-    if request.method == 'POST':
-        form = UserRegisterForm(request.POST)
-        if form.is_valid():
-            user = form.save()
-            login(request, user)
-            messages.success(request, 'Registration successful.')
-            return redirect('home')
-    else:
-        form = UserRegisterForm()
-    return render(request, 'users/register.html', {'form': form})
+    response = UserService.register_user(request)
+    if isinstance(response, dict):
+        return Response(response, status=status.HTTP_400_BAD_REQUEST)
+    return Response({'message': 'Registration successful'}, status=status.HTTP_201_CREATED)
 
 
+@api_view(['POST'])
+@permission_classes([AllowAny])
 def login_view(request):
-    if request.method == 'POST':
-        form = AuthenticationForm(request, data=request.POST)
-        if form.is_valid():
-            user = form.get_user()
-            login(request, user)
-            messages.success(request, 'Login successful.')
-            return redirect('home')
-    else:
-        form = AuthenticationForm()
-    return render(request, 'users/login.html', {'form': form})
+    response = UserService.login_user(request)
+    if isinstance(response, dict):
+        return Response(response, status=status.HTTP_400_BAD_REQUEST)
+    return Response({'message': 'Login successful'}, status=status.HTTP_200_OK)
 
 
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def logout_view(request):
-    logout(request)
-    messages.success(request, "You have been logged out successfully.")
-    return redirect('home')
+    response = UserService.logout_user(request)
+    return Response({'message': 'Logout successful'}, status=status.HTTP_200_OK)
 
 
-@login_required
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def generate_token(request):
+    response = UserService.generate_jwt_token(request.user)
+    return Response(response)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def generate_token_view(request):
-    return render(request, 'users/generate_token.html')
-
-
-@login_required
-def get_jwt_token(request):
     user = request.user
     refresh = RefreshToken.for_user(user)
-    return JsonResponse({
+
+    return Response({
         'refresh': str(refresh),
         'access': str(refresh.access_token),
     })
 
 
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def set_webhook(request):
+    user = request.user
+    webhook_url = request.data.get('webhook_url')
+
+    try:
+        result = UserService.update_webhook_url(user, webhook_url)
+        return Response(result, status=status.HTTP_200_OK)
+    except ValidationError as e:
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])  # доступ только для авторизованных пользователей
+@permission_classes([IsAuthenticated])
 def secured_data_view(request):
     data = {
         'message': 'This is a secured data available only for authenticated users.'

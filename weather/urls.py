@@ -1,8 +1,10 @@
 from django.urls import path
-from . import views
+from weather.views import CityViewSet
+
+city_list = CityViewSet.as_view({'get': 'list', 'post': 'add_city'})
+city_detail = CityViewSet.as_view({'get': 'retrieve', 'delete': 'delete'})
 
 urlpatterns = [
-    path('', views.city_weather, name='city_weather'),
-    path('delete/<str:city_name>/', views.delete_city, name='delete_city'),
-    path('add/', views.add_city, name='add_city'),
+    path('cities/', city_list, name='city-list'),
+    path('cities/<int:pk>/', city_detail, name='city-detail'),
 ]

@@ -1,77 +1,44 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from rest_framework import viewsets
+import logging
+
+from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
-
-from subscriptions.models import Subscription
-from subscriptions.forms import SubscriptionForm
-from django.contrib.auth.decorators import login_required
-
-from subscriptions.serializers import CitySerializer, SubscriptionSerializer
-from weather.models import City
+from services.subscription_service import SubscriptionService
 
 
-@login_required
-def subscription_list(request):
-    subscriptions = Subscription.objects.filter(user=request.user)
-    return render(request, 'subscriptions/subscription_list.html', {'subscriptions': subscriptions})
+logger = logging.getLogger(__name__)
 
 
-@login_required
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def add_subscription(request):
-    if request.method == 'POST':
-        form = SubscriptionForm(request.POST)
-        if form.is_valid():
-            subscription = form.save(commit=False)
-            subscription.user = request.user
-            subscription.save()
-            return redirect('subscription_list')
-    else:
-        form = SubscriptionForm()
-    return render(request, 'subscriptions/add_subscription.html', {'form': form})
+    user = request.user
+    city_name = request.data.get('city_name')
+    notification_period = request.data.get('notification_period')
+    try:
+        subscription = SubscriptionService.create_subscription(user, city_name, notification_period)
+        return Response({'message': f'Subscribed to {subscription.city.name}'}, status=status.HTTP_201_CREATED)
+    except ValueError as e:
+        logger.error(f"Error adding subscription for user {user.username}: {e}")
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
-@login_required
-def edit_subscription(request, subscription_id):
-    subscription = get_object_or_404(Subscription, id=subscription_id, user=request.user)
-    if request.method == 'POST':
-        form = SubscriptionForm(request.POST, instance=subscription)
-        if form.is_valid():
-            form.save()
-            return redirect('subscription_list')
-    else:
-        form = SubscriptionForm(instance=subscription)
-    return render(request, 'subscriptions/edit_subscription.html', {'form': form})
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def update_subscription(request, subscription_id):
+    user = request.user
+    notification_period = request.data.get('notification_period')
+    try:
+        SubscriptionService.update_subscription(subscription_id, user, notification_period)
+        return Response({'message': 'Subscription updated successfully'}, status=status.HTTP_200_OK)
+    except ValueError as e:
+        return Response({'error': str(e)}, status=status.HTTP_404_NOT_FOUND)
 
 
-@login_required
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
 def delete_subscription(request, subscription_id):
-    subscription = get_object_or_404(Subscription, id=subscription_id, user=request.user)
-    if request.method == 'POST':
-        subscription.delete()
-        return redirect('subscription_list')
-    return render(request, 'subscriptions/delete_subscription.html', {'subscription': subscription})
-
-
-@login_required
-def add_subscription_from_city(request, city_id):
-    city = get_object_or_404(City, id=city_id)
-    Subscription.objects.create(user=request.user, city=city, notification_period=3)
-    return redirect('subscription_list')
-
-
-class CityViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = City.objects.all()
-    serializer_class = CitySerializer
-    permission_classes = [IsAuthenticated]
-
-
-class SubscriptionViewSet(viewsets.ModelViewSet):
-    serializer_class = SubscriptionSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        return Subscription.objects.filter(user=self.request.user)
-
-    def perform_create(self, serializer):
-
-        serializer.save(user=self.request.user)
+    user = request.user
+    SubscriptionService.delete_subscription(subscription_id, user)
+    return Response({'message': 'Subscription deleted successfully'}, status=status.HTTP_204_NO_CONTENT)

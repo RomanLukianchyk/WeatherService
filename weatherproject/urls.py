@@ -8,11 +8,9 @@ from rest_framework_simplejwt.views import (
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('users/', include('users.urls')),
-    path('', lambda request: render(request, 'home.html'), name='home'),
+    path('api/users/', include('users.urls')),
+    path('api/weather/', include('weather.urls')),
+    path('api/subscriptions/', include('subscriptions.urls')),
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    path('cities/', include('weather.urls')),
-    path('subscriptions/', include('subscriptions.urls')),
-    path('api/', include('subscriptions.urls')),
 ]
