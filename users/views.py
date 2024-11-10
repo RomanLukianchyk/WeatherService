@@ -3,19 +3,18 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from django.contrib.auth.models import User
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from services.user_service import UserService
+from users.services.user_service import UserService
 
 
 @api_view(['POST'])
-@permission_classes([AllowAny])
 def register(request):
-    response = UserService.register_user(request)
-    if isinstance(response, dict):
-        return Response(response, status=status.HTTP_400_BAD_REQUEST)
-    return Response({'message': 'Registration successful'}, status=status.HTTP_201_CREATED)
+    try:
+        user = UserService.register_user(request.data)
+        return Response({"message": "User registered successfully"}, status=status.HTTP_201_CREATED)
+    except ValidationError as e:
+        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['POST'])

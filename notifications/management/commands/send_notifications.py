@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 from subscriptions.models import Subscription
-from services.notification_service import NotificationService
+from notifications.services.notification_service import NotificationService
 
 
 class Command(BaseCommand):

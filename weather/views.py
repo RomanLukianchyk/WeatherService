@@ -1,8 +1,8 @@
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.decorators import action
-from services.weather_service import WeatherService
-from repositories.city_repository import CityRepository
+from weather.services.weather_service import WeatherService
+from weather.repositories.city_repository import CityRepository
 
 
 class CityViewSet(viewsets.ViewSet):
@@ -13,9 +13,16 @@ class CityViewSet(viewsets.ViewSet):
 
     @action(detail=True, methods=['post'])
     def add_city(self, request):
-        name = request.data.get('name')
-        city = CityRepository.create_city(name)
-        return Response({'city': city.name}, status=status.HTTP_201_CREATED)
+        city_name = request.data.get('name')
+        if not city_name:
+            return Response({"error": "City name is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        city, created = WeatherService.add_city(city_name)
+
+        if created:
+            return Response({"message": f"{city_name} City add."}, status=status.HTTP_201_CREATED)
+        else:
+            return Response({"message": f"{city_name} already exists."}, status=status.HTTP_200_OK)
 
     def retrieve(self, request, pk=None):
         city = CityRepository.get_city_by_id(pk)

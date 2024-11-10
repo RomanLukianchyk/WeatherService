@@ -1,30 +1,41 @@
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.models import User
+from django.core.handlers.wsgi import WSGIRequest
 from django.http import JsonResponse, HttpRequest
 from django.core.exceptions import ValidationError
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import status
-from users.forms import UserRegisterForm
 from django.contrib.auth.forms import AuthenticationForm
 
 
 class UserService:
     @staticmethod
-    def register_user(request: HttpRequest) -> JsonResponse:
+    def register_user(request: WSGIRequest) -> JsonResponse:
         if request.method == 'POST':
-            form = UserRegisterForm(request.POST)
-            if form.is_valid():
-                user = form.save()
-                login(request, user)
+            data = request.POST
+            username = data.get('username')
+            email = data.get('email')
+            password = data.get('password')
+
+            if User.objects.filter(username=username).exists():
                 return JsonResponse({
-                    'message': 'Registration successful.',
-                    'user_id': user.id,
-                    'username': user.username,
-                }, status=status.HTTP_201_CREATED)
-            else:
-                return JsonResponse({
-                    'errors': form.errors
+                    'error': 'Username already exists.'
                 }, status=status.HTTP_400_BAD_REQUEST)
+
+            if User.objects.filter(email=email).exists():
+                return JsonResponse({
+                    'error': 'Email already registered.'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            user = User.objects.create_user(username=username, email=email, password=password)
+            login(request, user)
+
+            return JsonResponse({
+                'message': 'Registration successful.',
+                'user_id': user.id,
+                'username': user.username,
+            }, status=status.HTTP_201_CREATED)
+
         return JsonResponse({'error': 'Invalid request method.'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
     @staticmethod

@@ -21,7 +21,9 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATIC_URL = '/static/'
 
 
-STATICFILES_DIRS = [BASE_DIR / "static"]
+# STATICFILES_DIRS = [BASE_DIR / "static"]
+
+WEATHER_API_KEY=env('WEATHER_API_KEY')
 
 
 AUTH_USER_MODEL = 'users.User'

@@ -2,8 +2,7 @@ from datetime import timedelta
 
 from django.utils import timezone
 
-from repositories.city_repository import CityRepository
-from repositories.subscription_repository import SubscriptionRepository
+from subscriptions.repositories.subscription_repository import SubscriptionRepository
 from subscriptions.models import Subscription
 from django.contrib.auth.models import User
 from typing import List, Dict

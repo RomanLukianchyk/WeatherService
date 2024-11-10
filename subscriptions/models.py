@@ -1,6 +1,5 @@
 from django.db import models
 from django.contrib.auth.models import User
-
 from weatherproject import settings
 from weather.models import City
 from django.utils import timezone
@@ -14,8 +13,13 @@ class Subscription(models.Model):
     subscribed_at = models.DateTimeField(auto_now_add=True)
     next_notification = models.DateTimeField(default=timezone.now)
     last_status = models.CharField(max_length=20, default='Pending')
+    webhook_url = models.URLField(blank=True, null=True, help_text="Индивидуальный URL вебхука для уведомлений")
 
     def __str__(self):
         return f"{self.user.username} - {self.city.name} ({self.notification_period} minutes)"
+
+    def update_next_notification(self):
+        self.next_notification = timezone.now() + timedelta(minutes=self.notification_period)
+        self.save()
 
 
